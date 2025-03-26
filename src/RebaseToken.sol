@@ -21,7 +21,7 @@ error RebaseToken__InterestRateCannotBeIncreased(uint256, uint256);
  */
 contract RebaseToken is ERC20, Ownable, AccessControl {
 
-    uint256 private s_interestRate = 5e10;
+    uint256 private s_interestRate = (1 * PRECISION_FACTOR) / 1e8;
     bytes32 private constant MINT_AND_BURN_ROLE = keccak256("MINT_AND_BURN_ROLE");
 
     mapping(address => uint256) private s_userInterestRate;
@@ -93,15 +93,18 @@ contract RebaseToken is ERC20, Ownable, AccessControl {
         return super.balanceOf(_user) * _calculateInterestRateSinceLastUpdate(_user) / PRECISION_FACTOR;
     }
 
-    function _calculateInterestRateSinceLastUpdate(address _user) internal view returns (uint256) {
+    function _calculateInterestRateSinceLastUpdate(address _user) internal view returns (uint256 linearInterest) {
         // we need to calculate the interest that has accumulated since the last update
         // this is going to be linear growth with time
         // 1. calculate the time since the last update
         // 2. calculate the amount of linear growth
         // (principal amount) + (principal amount * user interest rate * time elapsed)
-        // deposit amoutn = 10
+        // e.g. deposit amoutn = 10
         // interest rate 0.5 tokens per second 
-        // 10 + (10 * 0.5 * 2)
+        // time elapsed = 2 seconds
+        // 10 + (10 * 0.5 * 2) = 20
+        uint256 timeElapsed = block.timestamp - s_userLastUpdatedTimestamp[_user];
+        linearInterest = (PRECISION_FACTOR + (s_userInterestRate[_user] * timeElapsed));
     }
 
     /**
@@ -113,9 +116,6 @@ contract RebaseToken is ERC20, Ownable, AccessControl {
     function burn(address _from,uint256 _amount) external onlyRole(MINT_AND_BURN_ROLE){
         // considering the dust amount of the tx. This is just a standard way to handle it in DeFi.
         // This can mitigate the dust issue.
-        if (_amount == type(uint256).max) {
-            _amount = balanceOf(_from);
-        }
         _mintAccruedInterest(_from);
         _burn(_from, _amount);
     }
