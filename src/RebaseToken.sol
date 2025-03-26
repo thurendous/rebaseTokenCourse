@@ -6,9 +6,7 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 
-
 error RebaseToken__InterestRateCannotBeIncreased(uint256, uint256);
-
 
 /**
  * @title RebaseToken
@@ -20,7 +18,6 @@ error RebaseToken__InterestRateCannotBeIncreased(uint256, uint256);
  * @dev the `totalSupply` function is left as erc20's function, so it will only return the principle balance of the user. It will not inculde the interest that has accrued.
  */
 contract RebaseToken is ERC20, Ownable, AccessControl {
-
     uint256 private s_interestRate = (1 * PRECISION_FACTOR) / 1e8;
     bytes32 private constant MINT_AND_BURN_ROLE = keccak256("MINT_AND_BURN_ROLE");
 
@@ -31,13 +28,11 @@ contract RebaseToken is ERC20, Ownable, AccessControl {
 
     event InterestRateSet(uint256 newInterestRate);
 
-    constructor(string memory name, string memory symbol) ERC20(name, symbol) Ownable(msg.sender) {
-    }
+    constructor(string memory name, string memory symbol) ERC20(name, symbol) Ownable(msg.sender) {}
 
     function grantMintAndBurnRole(address _user) external onlyOwner {
         _grantRole(MINT_AND_BURN_ROLE, _user);
     }
-    
 
     function setInterestRate(uint256 _newInterestRate) external onlyOwner {
         if (_newInterestRate > s_interestRate) {
@@ -49,10 +44,10 @@ contract RebaseToken is ERC20, Ownable, AccessControl {
     }
 
     /**
-    * @notice Mint the user tokens when they deposit into the vault
-    * @param _to The address of the user to mint the tokens to
-    * @param _amount The amount of tokens to mint
-    */
+     * @notice Mint the user tokens when they deposit into the vault
+     * @param _to The address of the user to mint the tokens to
+     * @param _amount The amount of tokens to mint
+     */
     function mint(address _to, uint256 _amount) external onlyRole(MINT_AND_BURN_ROLE) {
         _mintAccruedInterest(_to); // This is for minting the previous interest rate part for the user
         s_userInterestRate[_to] = s_interestRate;
@@ -100,7 +95,7 @@ contract RebaseToken is ERC20, Ownable, AccessControl {
         // 2. calculate the amount of linear growth
         // (principal amount) + (principal amount * user interest rate * time elapsed)
         // e.g. deposit amoutn = 10
-        // interest rate 0.5 tokens per second 
+        // interest rate 0.5 tokens per second
         // time elapsed = 2 seconds
         // 10 + (10 * 0.5 * 2) = 20
         uint256 timeElapsed = block.timestamp - s_userLastUpdatedTimestamp[_user];
@@ -113,7 +108,7 @@ contract RebaseToken is ERC20, Ownable, AccessControl {
      * @param _amount The amount of tokens to burn
      * @dev We need to also handle the dust amount which is the amount of tokens when the tx is going through. So the interest generated from it is called the `dust amount`.
      */
-    function burn(address _from,uint256 _amount) external onlyRole(MINT_AND_BURN_ROLE){
+    function burn(address _from, uint256 _amount) external onlyRole(MINT_AND_BURN_ROLE) {
         // considering the dust amount of the tx. This is just a standard way to handle it in DeFi.
         // This can mitigate the dust issue.
         _mintAccruedInterest(_from);
@@ -125,7 +120,7 @@ contract RebaseToken is ERC20, Ownable, AccessControl {
      * @param _recipient The address of the recipient
      * @param _amount The amount of tokens to transfer
      * @return bool
-     * @notice The protocol is designed to use the recipient's interest rate at the time of transfer if the recipient has a interest rate. 
+     * @notice The protocol is designed to use the recipient's interest rate at the time of transfer if the recipient has a interest rate.
      * On the other hand, if the recipient has no interest rate, the protocol will use the global interest rate at the time of transfer.
      */
     function transfer(address _recipient, uint256 _amount) public override returns (bool) {
@@ -153,7 +148,7 @@ contract RebaseToken is ERC20, Ownable, AccessControl {
     }
 
     /**
-    * @notice 
+     * @notice
      */
     function getUserInterestRate(address user) external view returns (uint256) {
         return s_userInterestRate[user];
@@ -176,6 +171,4 @@ contract RebaseToken is ERC20, Ownable, AccessControl {
     function getInterestRate() external view returns (uint256) {
         return s_interestRate;
     }
-    
-    
 }

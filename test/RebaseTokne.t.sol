@@ -9,7 +9,7 @@ import {IRebaseToken} from "../src/interfaces/IRebaseToken.sol";
 contract RebaseTokenTest is Test {
     Vault public vault;
     RebaseToken public rebaseToken;
-    
+
     address public owner = makeAddr("owner");
     address public user = makeAddr("user");
 
@@ -19,14 +19,14 @@ contract RebaseTokenTest is Test {
         vault = new Vault(IRebaseToken(address(rebaseToken)));
         rebaseToken.grantMintAndBurnRole(address(vault));
         // solhint-disable-next-line
-        (bool success, ) = payable(address(vault)).call{value: 1e18}("");
+        (bool success,) = payable(address(vault)).call{value: 1e18}("");
         vm.stopPrank();
     }
 
     function addRewardsToVault(uint256 amount) public {
         vm.deal(owner, amount);
         vm.prank(owner);
-        (bool success, ) = payable(address(vault)).call{value: amount}("");
+        (bool success,) = payable(address(vault)).call{value: amount}("");
         require(success, "Failed to add rewards to vault");
     }
 
@@ -37,7 +37,7 @@ contract RebaseTokenTest is Test {
     }
 
     /**
-     * This is a fuzz test 
+     * This is a fuzz test
      */
     function testDepositLinear(uint256 amount) public {
         // vm.assume(amount > 1e4); // if this cannot be reached we just skip the test
@@ -63,7 +63,6 @@ contract RebaseTokenTest is Test {
         assertGt(endBalance, middleBalance);
         assertApproxEqAbs(middleBalance - startBalance, endBalance - middleBalance, 1);
     }
-
 
     function testRedeemStraightAway(uint256 amount) public {
         amount = bound(amount, 1e5, type(uint96).max);
@@ -110,6 +109,5 @@ contract RebaseTokenTest is Test {
         // 2. check the balances
         assertEq(rebaseToken.balanceOf(user), amount - amountToSend);
         assertEq(rebaseToken.balanceOf(user2), amountToSend);
-        
     }
 }

@@ -3,7 +3,6 @@ pragma solidity 0.8.24;
 
 import {IRebaseToken} from "./interfaces/IRebaseToken.sol";
 
-
 error Vault__RedeemFailed();
 
 /// @notice maybe we should set a max deposit amount to limit the amount of rewards we can set up for the users in case it crosses the limit.
