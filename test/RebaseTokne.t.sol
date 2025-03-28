@@ -5,6 +5,8 @@ import {Test, console} from "forge-std/Test.sol";
 import {Vault} from "../src/Vault.sol";
 import {RebaseToken, RebaseToken__InterestRateCannotBeDecreased} from "../src/RebaseToken.sol";
 import {IRebaseToken} from "../src/interfaces/IRebaseToken.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {IAccessControl} from "@openzeppelin/contracts/access/IAccessControl.sol";
 
 contract RebaseTokenTest is Test {
     Vault public vault;
@@ -21,6 +23,11 @@ contract RebaseTokenTest is Test {
         // solhint-disable-next-line
         (bool success,) = payable(address(vault)).call{value: 1e18}("");
         vm.stopPrank();
+
+        vm.label(address(rebaseToken), "rebaseToken");
+        vm.label(address(vault), "vault");
+        vm.label(address(owner), "owner");
+        vm.label(address(user), "user");
     }
 
     function addRewardsToVault(uint256 amount) public {
@@ -124,5 +131,26 @@ contract RebaseTokenTest is Test {
         vm.prank(owner);
         vm.expectRevert(abi.encodeWithSelector(RebaseToken__InterestRateCannotBeDecreased.selector, 9e9, 1e10));
         rebaseToken.setInterestRate(9e9);
+    }
+
+    function testCannotCallMintAndBurn() public {
+        vm.prank(user);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IAccessControl.AccessControlUnauthorizedAccount.selector,
+                user,
+                keccak256("MINT_AND_BURN_ROLE")
+            )
+        );
+        rebaseToken.mint(address(vault), 1000000000000000000);
+        vm.prank(user);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IAccessControl.AccessControlUnauthorizedAccount.selector,
+                user,
+                keccak256("MINT_AND_BURN_ROLE")
+            )
+        );
+        rebaseToken.burn(address(vault), 1000000000000000000);
     }
 }
