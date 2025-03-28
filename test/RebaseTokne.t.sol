@@ -3,7 +3,7 @@ pragma solidity 0.8.24;
 
 import {Test, console} from "forge-std/Test.sol";
 import {Vault} from "../src/Vault.sol";
-import {RebaseToken} from "../src/RebaseToken.sol";
+import {RebaseToken, RebaseToken__InterestRateCannotBeDecreased} from "../src/RebaseToken.sol";
 import {IRebaseToken} from "../src/interfaces/IRebaseToken.sol";
 
 contract RebaseTokenTest is Test {
@@ -101,6 +101,11 @@ contract RebaseTokenTest is Test {
         vault.deposit{value: amount}();
         vm.stopPrank();
 
+        // owner reduces the interest rate 
+        vm.prank(owner);
+        rebaseToken.setInterestRate(4e10);
+
+
         address user2 = makeAddr("user2");
         vm.startPrank(user);
         rebaseToken.transfer(user2, amountToSend);
@@ -109,5 +114,15 @@ contract RebaseTokenTest is Test {
         // 2. check the balances
         assertEq(rebaseToken.balanceOf(user), amount - amountToSend);
         assertEq(rebaseToken.balanceOf(user2), amountToSend);
+
+        // 3. check the interest rate of the user and user2
+        assertEq(rebaseToken.getUserInterestRate(user), 1e10);
+        assertEq(rebaseToken.getUserInterestRate(user2), 4e10);
+    }
+
+    function testCannotSetInterestRateBelowCurrentInterestRate() public {
+        vm.prank(owner);
+        vm.expectRevert(abi.encodeWithSelector(RebaseToken__InterestRateCannotBeDecreased.selector, 9e9, 1e10));
+        rebaseToken.setInterestRate(9e9);
     }
 }

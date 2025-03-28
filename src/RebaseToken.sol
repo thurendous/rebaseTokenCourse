@@ -6,7 +6,7 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 
-error RebaseToken__InterestRateCannotBeIncreased(uint256, uint256);
+error RebaseToken__InterestRateCannotBeDecreased(uint256, uint256);
 
 /**
  * @title RebaseToken
@@ -35,8 +35,8 @@ contract RebaseToken is ERC20, Ownable, AccessControl {
     }
 
     function setInterestRate(uint256 _newInterestRate) external onlyOwner {
-        if (_newInterestRate > s_interestRate) {
-            revert RebaseToken__InterestRateCannotBeIncreased(_newInterestRate, s_interestRate);
+        if (_newInterestRate < s_interestRate) {
+            revert RebaseToken__InterestRateCannotBeDecreased(_newInterestRate, s_interestRate);
         }
         // set the interest rate
         s_interestRate = _newInterestRate;
